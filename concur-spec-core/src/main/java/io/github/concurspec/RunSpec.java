@@ -4,7 +4,23 @@ import java.time.Duration;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Immutable spec for a ConcuRunner run.
+ * Immutable specification for a single {@link ConcurRunner} execution.
+ *
+ * <p>
+ * {@code RunSpec} defines <b>how a concurrency test should be executed</b>,
+ * including thread count, execution duration, timeouts, failure thresholds,
+ * and the task to be executed concurrently.
+ * </p>
+ *
+ * <p>
+ * Instances are created via the {@link Builder}, which performs validation
+ * to ensure only safe and meaningful configurations can be constructed.
+ * </p>
+ *
+ * <p>
+ * This type is intentionally immutable and thread-safe, allowing it to be
+ * freely shared across worker threads during a test run.
+ * </p>
  */
 public record RunSpec(
         int threads,
@@ -59,6 +75,22 @@ public record RunSpec(
         }
 
         public RunSpec build() {
+            if (threads <= 0) throw new IllegalArgumentException("threads must be > 0");
+
+            if (duration == null || duration.isZero() || duration.isNegative())
+                throw new IllegalArgumentException("duration must be positive");
+
+            if (totalTimeout == null || totalTimeout.isZero() || totalTimeout.isNegative())
+                throw new IllegalArgumentException("totalTimeout must be positive");
+
+            if (threadNamePrefix == null || threadNamePrefix.isBlank())
+                throw new IllegalArgumentException("threadNamePrefix must not be blank");
+
+            if (maxPendingFailures < 0)
+                throw new IllegalArgumentException("maxPendingFailures must be >= 0");
+
+            if (task == null) throw new IllegalArgumentException("task must not be null");
+
             return new RunSpec(threads, duration, totalTimeout, threadNamePrefix, maxPendingFailures, task, errors);
         }
     }
