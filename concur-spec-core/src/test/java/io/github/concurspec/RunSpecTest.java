@@ -13,7 +13,8 @@ class RunSpecTest {
     @DisplayName("기본값으로 RunSpec 생성이 가능하다")
     void shouldCreateRunSpecWithDefaultValues() {
         // given
-        Runnable task = () -> {};
+        Runnable task = () -> {
+        };
 
         // when
         RunSpec spec = RunSpec.builder()
@@ -35,7 +36,8 @@ class RunSpecTest {
     void shouldThrowExceptionWhenThreadsIsZeroOrNegative() {
         // given
         int invalidThreads = 0;
-        Runnable task = () -> {};
+        Runnable task = () -> {
+        };
 
         // when & then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
@@ -53,7 +55,8 @@ class RunSpecTest {
     void shouldThrowExceptionWhenDurationIsNull() {
         // given
         Duration nullDuration = null;
-        Runnable task = () -> {};
+        Runnable task = () -> {
+        };
 
         // when & then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
@@ -70,7 +73,8 @@ class RunSpecTest {
     @DisplayName("duration이 0 또는 음수이면 예외가 발생한다")
     void shouldThrowExceptionWhenDurationIsZeroOrNegative() {
         // given
-        Runnable task = () -> {};
+        Runnable task = () -> {
+        };
 
         // when & then - zero duration
         assertThrows(IllegalArgumentException.class, () ->
@@ -93,7 +97,8 @@ class RunSpecTest {
     @DisplayName("totalTimeout이 0 또는 음수이면 예외가 발생한다")
     void shouldThrowExceptionWhenTotalTimeoutIsZeroOrNegative() {
         // given
-        Runnable task = () -> {};
+        Runnable task = () -> {
+        };
 
         // when & then - zero totalTimeout
         assertThrows(IllegalArgumentException.class, () ->
@@ -117,7 +122,8 @@ class RunSpecTest {
     void shouldThrowExceptionWhenThreadNamePrefixIsBlank() {
         // given
         String blankPrefix = "  ";
-        Runnable task = () -> {};
+        Runnable task = () -> {
+        };
 
         // when & then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
@@ -135,7 +141,8 @@ class RunSpecTest {
     void shouldThrowExceptionWhenMaxPendingFailuresIsNegative() {
         // given
         int negativeValue = -1;
-        Runnable task = () -> {};
+        Runnable task = () -> {
+        };
 
         // when & then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
