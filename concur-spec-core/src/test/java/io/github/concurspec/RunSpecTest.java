@@ -5,7 +5,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 class RunSpecTest {
 
@@ -22,13 +23,15 @@ class RunSpecTest {
                 .build();
 
         // then
-        assertNotNull(spec);
-        assertEquals(16, spec.threads());
-        assertEquals(Duration.ofSeconds(2), spec.duration());
-        assertEquals(Duration.ofSeconds(10), spec.totalTimeout());
-        assertEquals("concur", spec.threadNamePrefix());
-        assertEquals(0, spec.maxPendingFailures());
-        assertNotNull(spec.errors());
+        assertSoftly(softly -> {
+            softly.assertThat(spec).isNotNull();
+            softly.assertThat(spec.threads()).isEqualTo(16);
+            softly.assertThat(spec.duration()).isEqualTo(Duration.ofSeconds(2));
+            softly.assertThat(spec.totalTimeout()).isEqualTo(Duration.ofSeconds(10));
+            softly.assertThat(spec.threadNamePrefix()).isEqualTo("concur");
+            softly.assertThat(spec.maxPendingFailures()).isEqualTo(0);
+            softly.assertThat(spec.errors()).isNotNull();
+        });
     }
 
     @Test
@@ -40,14 +43,14 @@ class RunSpecTest {
         };
 
         // when & then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+        assertThatThrownBy(() ->
                 RunSpec.builder()
                         .threads(invalidThreads)
                         .task(task)
                         .build()
-        );
-
-        assertTrue(exception.getMessage().contains("threads"));
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("threads");
     }
 
     @Test
@@ -59,14 +62,14 @@ class RunSpecTest {
         };
 
         // when & then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+        assertThatThrownBy(() ->
                 RunSpec.builder()
                         .duration(nullDuration)
                         .task(task)
                         .build()
-        );
-
-        assertTrue(exception.getMessage().contains("duration"));
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("duration");
     }
 
     @Test
@@ -77,20 +80,20 @@ class RunSpecTest {
         };
 
         // when & then - zero duration
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThatThrownBy(() ->
                 RunSpec.builder()
                         .duration(Duration.ZERO)
                         .task(task)
                         .build()
-        );
+        ).isInstanceOf(IllegalArgumentException.class);
 
         // when & then - negative duration
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThatThrownBy(() ->
                 RunSpec.builder()
                         .duration(Duration.ofMillis(-1))
                         .task(task)
                         .build()
-        );
+        ).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -101,20 +104,20 @@ class RunSpecTest {
         };
 
         // when & then - zero totalTimeout
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThatThrownBy(() ->
                 RunSpec.builder()
                         .totalTimeout(Duration.ZERO)
                         .task(task)
                         .build()
-        );
+        ).isInstanceOf(IllegalArgumentException.class);
 
         // when & then - negative totalTimeout
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThatThrownBy(() ->
                 RunSpec.builder()
                         .totalTimeout(Duration.ofMillis(-1))
                         .task(task)
                         .build()
-        );
+        ).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -126,14 +129,14 @@ class RunSpecTest {
         };
 
         // when & then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+        assertThatThrownBy(() ->
                 RunSpec.builder()
                         .threadNamePrefix(blankPrefix)
                         .task(task)
                         .build()
-        );
-
-        assertTrue(exception.getMessage().contains("threadNamePrefix"));
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("threadNamePrefix");
     }
 
     @Test
@@ -145,14 +148,14 @@ class RunSpecTest {
         };
 
         // when & then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+        assertThatThrownBy(() ->
                 RunSpec.builder()
                         .maxPendingFailures(negativeValue)
                         .task(task)
                         .build()
-        );
-
-        assertTrue(exception.getMessage().contains("maxPendingFailures"));
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("maxPendingFailures");
     }
 
     @Test
@@ -162,13 +165,13 @@ class RunSpecTest {
         Runnable nullTask = null;
 
         // when & then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+        assertThatThrownBy(() ->
                 RunSpec.builder()
                         .task(nullTask)
                         .build()
-        );
-
-        assertTrue(exception.getMessage().contains("task"));
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("task");
     }
 
 }

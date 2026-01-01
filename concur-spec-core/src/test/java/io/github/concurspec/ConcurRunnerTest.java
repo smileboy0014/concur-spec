@@ -7,7 +7,9 @@ import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 class ConcurRunnerTest {
 
@@ -18,9 +20,8 @@ class ConcurRunnerTest {
         RunSpec nullSpec = null;
 
         // when & then
-        assertThrows(NullPointerException.class, () ->
-                ConcurRunner.run(nullSpec)
-        );
+        assertThatThrownBy(() -> ConcurRunner.run(nullSpec))
+                .isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -37,10 +38,17 @@ class ConcurRunnerTest {
                 .build();
 
         // when
-        ConcurRunner.run(spec);
+        RunStats result = ConcurRunner.run(spec);
+
         // then
-        assertTrue(counter.get() > 0, "Task should have been executed at least once");
-        assertTrue(spec.errors().isEmpty(), "No errors should have occurred");
+        assertSoftly(softly -> {
+            softly.assertThat(counter.get()).isGreaterThan(0);
+            softly.assertThat(result.errors()).isEmpty();
+            softly.assertThat(result.successCount()).isGreaterThan(0);
+            softly.assertThat(result.failureCount()).isEqualTo(0);
+            softly.assertThat(result.latency()).isNotNull();
+            softly.assertThat(result.latency().count()).isGreaterThan(0);
+        });
     }
 
     @Test
@@ -57,13 +65,14 @@ class ConcurRunnerTest {
                 .build();
 
         // when
-        ConcurRunner.run(spec);
+        RunStats result = ConcurRunner.run(spec);
 
         // then
-        assertTrue(threadNames.size() > 1, "Multiple threads should have executed");
-        threadNames.keySet().forEach(name ->
-                assertTrue(name.startsWith("test-thread-"), "Thread name should start with prefix")
-        );
+        assertSoftly(softly -> {
+            softly.assertThat(threadNames).hasSizeGreaterThan(1);
+            softly.assertThat(threadNames.keySet()).allMatch(name -> name.startsWith("test-thread-"));
+            softly.assertThat(result.successCount()).isGreaterThan(0);
+        });
     }
 
     @Test
@@ -82,12 +91,15 @@ class ConcurRunnerTest {
                 .build();
 
         // when
-        ConcurRunner.run(spec);
+        RunStats result = ConcurRunner.run(spec);
 
         // then
-        assertFalse(spec.errors().isEmpty(), "Errors should have been collected");
-        assertTrue(spec.errors().stream().anyMatch(e -> e.getMessage().equals("Test error")),
-                "Test exception should be in errors");
+        assertSoftly(softly -> {
+            softly.assertThat(result.errors()).isNotEmpty();
+            softly.assertThat(result.errors()).anyMatch(e -> e.getMessage().equals("Test error"));
+            softly.assertThat(result.successCount()).isEqualTo(0);
+            softly.assertThat(result.failureCount()).isGreaterThan(0);
+        });
     }
 
     @Test
@@ -109,12 +121,15 @@ class ConcurRunnerTest {
 
         // when
         long startTime = System.currentTimeMillis();
-        ConcurRunner.run(spec);
+        RunStats result = ConcurRunner.run(spec);
         long elapsedTime = System.currentTimeMillis() - startTime;
 
         // then
-        assertTrue(spec.errors().size() >= 5, "Should have at least maxPendingFailures errors");
-        assertTrue(elapsedTime < 10000, "Should have terminated early before full duration");
+        assertSoftly(softly -> {
+            softly.assertThat(result.errors()).hasSizeGreaterThanOrEqualTo(5);
+            softly.assertThat(elapsedTime).isLessThan(10000);
+            softly.assertThat(result.failureCount()).isGreaterThanOrEqualTo(5);
+        });
     }
 
     @Test
@@ -135,9 +150,8 @@ class ConcurRunnerTest {
                 .build();
 
         // when & then
-        assertThrows(ConcurRunner.TimeoutException.class, () ->
-                ConcurRunner.run(spec)
-        );
+        assertThatThrownBy(() -> ConcurRunner.run(spec))
+                .isInstanceOf(ConcurRunner.TimeoutException.class);
     }
 
     @Test
@@ -160,11 +174,16 @@ class ConcurRunnerTest {
                 .build();
 
         // when
-        ConcurRunner.run(spec);
+        RunStats result = ConcurRunner.run(spec);
 
         // then
-        assertTrue(callCount.get() > 0, "Task should have been called");
-        assertFalse(spec.errors().isEmpty(), "Some errors should have been collected");
+        assertSoftly(softly -> {
+            softly.assertThat(callCount.get()).isGreaterThan(0);
+            softly.assertThat(result.errors()).isNotEmpty();
+            softly.assertThat(result.successCount()).isGreaterThan(0);
+            softly.assertThat(result.failureCount()).isGreaterThan(0);
+            softly.assertThat(callCount.get()).isEqualTo(result.successCount() + result.failureCount());
+        });
     }
 
     @Test
@@ -181,11 +200,14 @@ class ConcurRunnerTest {
 
         // when
         long startTime = System.currentTimeMillis();
-        ConcurRunner.run(spec);
+        RunStats result = ConcurRunner.run(spec);
         long elapsedTime = System.currentTimeMillis() - startTime;
 
         // then
-        assertTrue(elapsedTime < 1000, "Should finish quickly with short duration");
+        assertSoftly(softly -> {
+            softly.assertThat(elapsedTime).isLessThan(1000);
+            softly.assertThat(result.successCount()).isGreaterThan(0);
+        });
     }
 
     @Test
@@ -202,10 +224,132 @@ class ConcurRunnerTest {
                 .build();
 
         // when
-        ConcurRunner.run(spec);
+        RunStats result = ConcurRunner.run(spec);
 
         // then
-        assertTrue(counter.get() > 0, "Task should have been executed");
-        assertTrue(spec.errors().isEmpty(), "No errors should have occurred");
+        assertSoftly(softly -> {
+            softly.assertThat(counter.get()).isGreaterThan(0);
+            softly.assertThat(result.errors()).isEmpty();
+            softly.assertThat(result.successCount()).isGreaterThan(0);
+            softly.assertThat(result.failureCount()).isEqualTo(0);
+        });
+    }
+
+    @Test
+    @DisplayName("latency 통계가 정확히 기록된다")
+    void shouldRecordLatencyStatistics() throws InterruptedException {
+        // given
+        RunSpec spec = RunSpec.builder()
+                .threads(4)
+                .duration(Duration.ofMillis(100))
+                .totalTimeout(Duration.ofSeconds(5))
+                .task(() -> {
+                    // 약간의 작업 수행
+                    for (int i = 0; i < 100; i++) {
+                        Math.sqrt(i);
+                    }
+                })
+                .build();
+
+        // when
+        RunStats result = ConcurRunner.run(spec);
+
+        // then
+        assertSoftly(softly -> {
+            softly.assertThat(result.latency()).isNotNull();
+            softly.assertThat(result.latency().count()).isGreaterThan(0);
+            softly.assertThat(result.latency().minNanos()).isGreaterThan(0);
+            softly.assertThat(result.latency().maxNanos()).isGreaterThanOrEqualTo(result.latency().minNanos());
+            softly.assertThat(result.latency().avgNanos()).isGreaterThan(0);
+            softly.assertThat(result.latency().p50Nanos()).isGreaterThan(0);
+            softly.assertThat(result.latency().p95Nanos()).isGreaterThan(0);
+            softly.assertThat(result.latency().p99Nanos()).isGreaterThan(0);
+        });
+    }
+
+    @Test
+    @DisplayName("assertNoUncaughtErrors는 에러가 없으면 성공한다")
+    void shouldPassAssertNoUncaughtErrorsWhenNoErrors() throws InterruptedException {
+        // given
+        RunSpec spec = RunSpec.builder()
+                .threads(2)
+                .duration(Duration.ofMillis(50))
+                .totalTimeout(Duration.ofSeconds(5))
+                .task(() -> {
+                })
+                .build();
+
+        // when
+        RunStats result = ConcurRunner.run(spec);
+
+        // then
+        assertThatCode(result::assertNoUncaughtErrors).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("assertNoUncaughtErrors는 에러가 있으면 AssertionError를 던진다")
+    void shouldThrowAssertionErrorWhenErrorsExist() throws InterruptedException {
+        // given
+        RunSpec spec = RunSpec.builder()
+                .threads(2)
+                .duration(Duration.ofMillis(50))
+                .totalTimeout(Duration.ofSeconds(5))
+                .task(() -> {
+                    throw new RuntimeException("Test error");
+                })
+                .build();
+
+        // when
+        RunStats result = ConcurRunner.run(spec);
+
+        // then
+        assertThatThrownBy(result::assertNoUncaughtErrors)
+                .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
+    @DisplayName("assertSuccessRateAtLeast는 성공률이 충족되면 성공한다")
+    void shouldPassAssertSuccessRateAtLeast() throws InterruptedException {
+        // given
+        AtomicInteger counter = new AtomicInteger(0);
+        RunSpec spec = RunSpec.builder()
+                .threads(4)
+                .duration(Duration.ofMillis(100))
+                .totalTimeout(Duration.ofSeconds(5))
+                .task(() -> {
+                    int count = counter.incrementAndGet();
+                    // 10번 중 9번 성공
+                    if (count % 10 == 0) {
+                        throw new RuntimeException("Occasional failure");
+                    }
+                })
+                .build();
+
+        // when
+        RunStats result = ConcurRunner.run(spec);
+
+        // then
+        assertThatCode(() -> result.assertSuccessRateAtLeast(0.8)).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("assertSuccessRateAtLeast는 성공률이 미달하면 AssertionError를 던진다")
+    void shouldThrowAssertionErrorWhenSuccessRateBelowThreshold() throws InterruptedException {
+        // given
+        RunSpec spec = RunSpec.builder()
+                .threads(2)
+                .duration(Duration.ofMillis(50))
+                .totalTimeout(Duration.ofSeconds(5))
+                .task(() -> {
+                    throw new RuntimeException("Always fail");
+                })
+                .build();
+
+        // when
+        RunStats result = ConcurRunner.run(spec);
+
+        // then
+        assertThatThrownBy(() -> result.assertSuccessRateAtLeast(0.5))
+                .isInstanceOf(AssertionError.class);
     }
 }
