@@ -75,22 +75,24 @@ public record RunSpec(
         }
 
         public RunSpec build() {
-            if (threads <= 0) throw new IllegalArgumentException("threads must be > 0");
-
-            if (duration == null || duration.isZero() || duration.isNegative())
+            if (threads <= 0) {
+                throw new IllegalArgumentException("threads must be > 0");
+            }
+            if (duration == null || duration.isZero() || duration.isNegative()) {
                 throw new IllegalArgumentException("duration must be positive");
-
-            if (totalTimeout == null || totalTimeout.isZero() || totalTimeout.isNegative())
+            }
+            if (totalTimeout == null || totalTimeout.isZero() || totalTimeout.isNegative()) {
                 throw new IllegalArgumentException("totalTimeout must be positive");
-
-            if (threadNamePrefix == null || threadNamePrefix.isBlank())
+            }
+            if (threadNamePrefix == null || threadNamePrefix.isBlank()) {
                 throw new IllegalArgumentException("threadNamePrefix must not be blank");
-
-            if (maxPendingFailures < 0)
+            }
+            if (maxPendingFailures < 0) {
                 throw new IllegalArgumentException("maxPendingFailures must be >= 0");
-
-            if (task == null) throw new IllegalArgumentException("task must not be null");
-
+            }
+            if (task == null) {
+                throw new IllegalArgumentException("task must not be null");
+            }
             return new RunSpec(threads, duration, totalTimeout, threadNamePrefix, maxPendingFailures, task, errors);
         }
     }

@@ -8,7 +8,8 @@ import java.util.Collection;
 public record RunStats(
         long successCount,
         long failureCount,
-        Collection<Throwable> errors
+        Collection<Throwable> errors,
+        LatencySnapshot latency
 ) {
     public void assertNoUncaughtErrors() {
         if (!errors.isEmpty()) {
