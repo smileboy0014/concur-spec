@@ -18,7 +18,7 @@ public final class ConcurRunner {
     private ConcurRunner() {
     }
 
-    public static void run(RunSpec spec) throws InterruptedException {
+    public static RunStats run(RunSpec spec) throws InterruptedException {
         Objects.requireNonNull(spec, "spec");
         Objects.requireNonNull(spec.task(), "task");
 
@@ -38,6 +38,7 @@ public final class ConcurRunner {
         AtomicBoolean cancel = new AtomicBoolean(false);
         LongAdder success = new LongAdder();
         LongAdder failure = new LongAdder();
+        LatencyRecorder latency = new LatencyRecorder();
 
         for (int i = 0; i < n; i++) {
             pool.submit(() -> {
@@ -46,6 +47,7 @@ public final class ConcurRunner {
                     final long endAt = System.nanoTime() + spec.duration().toNanos();
 
                     while (!cancel.get() && System.nanoTime() < endAt) {
+                        final long s = System.nanoTime();
                         try {
                             spec.task().run();
                             success.increment();
@@ -58,6 +60,8 @@ public final class ConcurRunner {
                                 cancel.set(true); // fail-fast
                                 break;
                             }
+                        } finally {
+                            latency.record(System.nanoTime() - s);
                         }
                     }
                 } catch (Exception e) {
@@ -85,12 +89,7 @@ public final class ConcurRunner {
             throw new TimeoutException("concurrency test timed out after " + spec.totalTimeout());
         }
 
-        System.out.println(
-                "ConcurRunner finished: " +
-                        "success=" + success.sum() +
-                        ", failure=" + failure.sum() +
-                        ", errors=" + spec.errors()
-        );
+        return new RunStats(success.sum(), failure.sum(), spec.errors(), latency.snapshot());
     }
 
     public static final class TimeoutException extends RuntimeException {
