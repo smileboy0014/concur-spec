@@ -63,3 +63,13 @@ publishing {
         }
     }
 }
+
+signing {
+    def signingKey = (findProperty('signingKey') ?: System.getenv('SIGNING_KEY'))?.toString()
+    def signingPassword = (findProperty('signingPassword') ?: System.getenv('SIGNING_PASSWORD'))?.toString()
+
+    if (signingKey && signingKey.trim()) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign(publishing.publications.mavenJava)
+    }
+}
