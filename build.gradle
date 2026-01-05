@@ -1,5 +1,5 @@
 allprojects {
-    group = "io.github.concurspec"
+    group = "io.github.smileboy0014"
     version = "0.1.0"
 
     repositories {
@@ -14,5 +14,13 @@ subprojects {
         toolchain {
             languageVersion = JavaLanguageVersion.of(17)
         }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+
+    tasks.withType(Javadoc).configureEach {
+        options.encoding = 'UTF-8'
     }
 }
