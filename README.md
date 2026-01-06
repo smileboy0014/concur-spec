@@ -10,7 +10,7 @@ A tiny, zero-dependency concurrency test runner for Java.
 ## Quick Start
 
 ```java
-RunStats stats = ConcuRunner.run(
+RunStats stats = ConcurRunner.run(
   RunSpec.builder()
     .threads(50)
     .duration(Duration.ofSeconds(2))

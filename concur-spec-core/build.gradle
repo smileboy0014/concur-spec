@@ -32,11 +32,11 @@ publishing {
             from components.java
 
             groupId = 'io.github.smileboy0014'
-            artifactId = 'concu-spec-core'
+            artifactId = 'concur-spec-core'
             version = rootProject.version.toString()
 
             pom {
-                name = 'ConcuSpec'
+                name = 'ConcurSpec'
                 description = 'A tiny, zero-dependency concurrency test runner for Java.'
                 url = 'https://github.com/smileboy0014/concur-spec'
 
