@@ -22,3 +22,24 @@ RunStats stats = ConcurRunner.run(
 stats.assertNoUncaughtErrors();
 stats.assertSuccessRateAtLeast(0.99);
 stats.assertLatencyP95Below(Duration.ofMillis(20));
+```
+
+## Installation
+
+### Gradle
+
+```Java
+dependencies {
+    testImplementation 'io.github.smileboy0014:concur-spec-core:0.1.0'
+}
+```
+
+### Maven
+```Java
+<dependency>
+  <groupId>io.github.smileboy0014</groupId>
+  <artifactId>concur-spec-core</artifactId>
+  <version>0.1.0</version>
+  <scope>test</scope>
+</dependency>
+```
