@@ -1,1 +1,6 @@
 rootProject.name = 'concur-spec'
+
+include(
+    'concur-spec-core',
+    'examples:basic-usage'
+)

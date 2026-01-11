@@ -1,0 +1,32 @@
+name: Publish to Maven Central
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+          cache: "gradle"
+
+      - name: Publish (Sonatype)
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}           # ASCII-armored private key
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }} # passphrase
+        run: |
+          ./gradlew \
+            :concur-spec-core:publishToSonatype \
+            closeAndReleaseSonatypeStagingRepository \
+            --no-daemon
