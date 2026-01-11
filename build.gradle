@@ -79,11 +79,14 @@ tasks.register('publishToCentralPortal') {
             }
         }
 
-        // Flat structure로 ZIP 생성
+        // Maven 표준 디렉토리 구조로 ZIP 생성
+        // 경로: io/github/smileboy0014/concur-spec-core/0.1.0/
+        def zipPath = "${group}/${artifactId}/${version}/"
+
         ant.zip(destfile: bundleFile) {
             artifactDir.listFiles().each { file ->
                 if (file.isFile()) {
-                    zipfileset(file: file.absolutePath, fullpath: file.name)
+                    zipfileset(file: file.absolutePath, fullpath: "${zipPath}${file.name}")
                 }
             }
         }
