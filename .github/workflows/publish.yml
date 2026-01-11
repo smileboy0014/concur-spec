@@ -20,7 +20,7 @@ jobs:
           java-version: "17"
           cache: "gradle"
 
-      - name: Publish (Sonatype)
+      - name: Publish to Central Portal
         env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
@@ -28,6 +28,5 @@ jobs:
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }} # passphrase
         run: |
           ./gradlew \
-            :concur-spec-core:publishToSonatype \
-            closeAndReleaseSonatypeStagingRepository \
+            publishToCentralPortal \
             --no-daemon
