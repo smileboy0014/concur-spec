@@ -55,13 +55,36 @@ tasks.register('publishToCentralPortal') {
             throw new GradleException("Artifact directory not found: ${artifactDir}")
         }
 
-        // ZIP 번들 생성
+        // ZIP 번들 생성 (flat structure 필요)
         def bundleFile = new File(buildDir, "central-bundle.zip")
         bundleFile.parentFile.mkdirs()
 
+        // 체크섬 파일 생성
+        artifactDir.listFiles().each { file ->
+            if (file.isFile() && !file.name.endsWith('.md5') && !file.name.endsWith('.sha1')) {
+                // MD5
+                def md5File = new File(artifactDir, "${file.name}.md5")
+                if (!md5File.exists()) {
+                    def md5 = java.security.MessageDigest.getInstance('MD5')
+                    file.withInputStream { stream -> md5.update(stream.bytes) }
+                    md5File.text = md5.digest().collect { String.format('%02x', it) }.join('')
+                }
+                // SHA1
+                def sha1File = new File(artifactDir, "${file.name}.sha1")
+                if (!sha1File.exists()) {
+                    def sha1 = java.security.MessageDigest.getInstance('SHA-1')
+                    file.withInputStream { stream -> sha1.update(stream.bytes) }
+                    sha1File.text = sha1.digest().collect { String.format('%02x', it) }.join('')
+                }
+            }
+        }
+
+        // Flat structure로 ZIP 생성
         ant.zip(destfile: bundleFile) {
-            fileset(dir: artifactDir) {
-                include(name: '**/*')
+            artifactDir.listFiles().each { file ->
+                if (file.isFile()) {
+                    zipfileset(file: file.absolutePath, fullpath: file.name)
+                }
             }
         }
 

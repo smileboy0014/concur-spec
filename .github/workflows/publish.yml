@@ -20,6 +20,18 @@ jobs:
           java-version: "17"
           cache: "gradle"
 
+      - name: Import GPG key and upload to keyserver
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          echo "$SIGNING_KEY" | gpg --batch --import
+          KEY_ID=$(gpg --list-secret-keys --keyid-format LONG | grep sec | awk '{print $2}' | cut -d'/' -f2)
+          echo "Uploading key $KEY_ID to keyservers..."
+          gpg --keyserver keyserver.ubuntu.com --send-keys $KEY_ID || true
+          gpg --keyserver keys.openpgp.org --send-keys $KEY_ID || true
+          gpg --keyserver pgp.mit.edu --send-keys $KEY_ID || true
+
       - name: Publish to Central Portal
         env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
