@@ -1,5 +1,6 @@
 package io.github.concurspec;
 
+import java.time.Duration;
 import java.util.Collection;
 
 /**
@@ -22,5 +23,20 @@ public record RunStats(
         long total = successCount + failureCount;
         double r = total == 0 ? 1.0 : (successCount / (double) total);
         if (r < rate) throw new AssertionError("successRate=" + r + " < " + rate);
+    }
+
+    public void assertLatencyP95Below(Duration bound) {
+        if (latency.p95Nanos() > bound.toNanos())
+            throw new AssertionError("p95=" + Duration.ofNanos(latency.p95Nanos()) + " > " + bound);
+    }
+
+    /**
+     * Check if JVM currently has deadlocked threads.
+     */
+    public void assertNoDeadlock() {
+        var deadlock = DeadlockDetector.findDeadlock();
+        if (deadlock.isPresent()) {
+            throw new AssertionError(deadlock.get().toPrettyString());
+        }
     }
 }
