@@ -2,6 +2,8 @@ rootProject.name = 'concur-spec'
 
 include(
         'concur-spec-core',
+        'concur-spec-junit5',
         'examples:basic-usage',
-        'examples:consume-from-central'
+        'examples:consume-from-central',
+        'examples:junit5-usage'
 )
