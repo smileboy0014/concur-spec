@@ -32,6 +32,7 @@ public final class ConcurrentContext {
         Duration duration = DurationParser.parse(cfg.duration());
         Duration totalTimeout = DurationParser.parse(cfg.totalTimeout());
 
+        // warmup은 기존처럼 duration 기반으로만 수행(단순)
         if (!warmup.isZero() && warmup.toMillis() > 0) {
             RunSpec warm = RunSpec.builder()
                     .threads(cfg.threads())
@@ -39,18 +40,21 @@ public final class ConcurrentContext {
                     .totalTimeout(totalTimeout)
                     .threadNamePrefix(cfg.threadNamePrefix())
                     .maxPendingFailures(cfg.maxPendingFailures())
+                    .iterationsPerThread(0)
                     .task(task)
                     .build();
-            // discard
             ConcurRunner.run(warm);
         }
 
+        int iters = cfg.iterationsPerThread();
+
         RunSpec spec = RunSpec.builder()
                 .threads(cfg.threads())
-                .duration(duration)
+                .duration(duration) // iters>0이면 무시되지만 넣어둬도 OK
                 .totalTimeout(totalTimeout)
                 .threadNamePrefix(cfg.threadNamePrefix())
                 .maxPendingFailures(cfg.maxPendingFailures())
+                .iterationsPerThread(iters) // ✅ 핵심
                 .task(task)
                 .build();
 
