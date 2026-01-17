@@ -17,7 +17,13 @@ public @interface ConcurrentTest {
 
     int maxPendingFailures() default 5;
 
-    String threadNamePrefix() default "concu";
+    String threadNamePrefix() default "concur";
 
     String totalTimeout() default "10s";     // safety timeout
+
+    /**
+     * If > 0, each worker thread will execute the task exactly this many times.
+     * When set, duration-based loop is ignored.
+     */
+    int iterationsPerThread() default 0;
 }
