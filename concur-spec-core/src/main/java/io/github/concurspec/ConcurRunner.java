@@ -23,6 +23,8 @@ public final class ConcurRunner {
         Objects.requireNonNull(spec.task(), "task");
 
         int n = spec.threads();
+        final int iters = spec.iterationsPerThread();
+
 
         ExecutorService pool = Executors.newFixedThreadPool(n, r -> {
             Thread t = new Thread(r);
@@ -43,25 +45,49 @@ public final class ConcurRunner {
         for (int i = 0; i < n; i++) {
             pool.submit(() -> {
                 try {
-                    startBarrier.await(); // synchronize start
-                    final long endAt = System.nanoTime() + spec.duration().toNanos();
+                    startBarrier.await();
 
-                    while (!cancel.get() && System.nanoTime() < endAt) {
-                        final long s = System.nanoTime();
-                        try {
-                            spec.task().run();
-                            success.increment();
-                        } catch (Throwable t) {
-                            failure.increment();
-                            spec.errors().add(t);
+                    if (iters > 0) {
+                        // ✅ count-based
+                        for (int k = 0; k < iters && !cancel.get(); k++) {
+                            final long s = System.nanoTime();
+                            try {
+                                spec.task().run();
+                                success.increment();
+                            } catch (Throwable t) {
+                                failure.increment();
+                                spec.errors().add(t);
 
-                            if (spec.maxPendingFailures() > 0 &&
-                                    spec.errors().size() >= spec.maxPendingFailures()) {
-                                cancel.set(true); // fail-fast
-                                break;
+                                if (spec.maxPendingFailures() > 0 &&
+                                        spec.errors().size() >= spec.maxPendingFailures()) {
+                                    cancel.set(true);
+                                    break;
+                                }
+                            } finally {
+                                latency.record(System.nanoTime() - s);
                             }
-                        } finally {
-                            latency.record(System.nanoTime() - s);
+                        }
+                    } else {
+                        // ✅ duration-based (기존)
+                        final long endAt = System.nanoTime() + spec.duration().toNanos();
+
+                        while (!cancel.get() && System.nanoTime() < endAt) {
+                            final long s = System.nanoTime();
+                            try {
+                                spec.task().run();
+                                success.increment();
+                            } catch (Throwable t) {
+                                failure.increment();
+                                spec.errors().add(t);
+
+                                if (spec.maxPendingFailures() > 0 &&
+                                        spec.errors().size() >= spec.maxPendingFailures()) {
+                                    cancel.set(true);
+                                    break;
+                                }
+                            } finally {
+                                latency.record(System.nanoTime() - s);
+                            }
                         }
                     }
                 } catch (Exception e) {

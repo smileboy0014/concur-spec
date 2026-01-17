@@ -29,7 +29,8 @@ public record RunSpec(
         String threadNamePrefix,
         int maxPendingFailures,
         Runnable task,
-        ConcurrentLinkedQueue<Throwable> errors
+        ConcurrentLinkedQueue<Throwable> errors,
+        int iterationsPerThread
 ) {
     public static Builder builder() {
         return new Builder();
@@ -43,6 +44,7 @@ public record RunSpec(
         private int maxPendingFailures = 0;
         private Runnable task;
         private final ConcurrentLinkedQueue<Throwable> errors = new ConcurrentLinkedQueue<>();
+        private int iterationsPerThread = 0;
 
         public Builder threads(int v) {
             this.threads = v;
@@ -74,6 +76,11 @@ public record RunSpec(
             return this;
         }
 
+        public Builder iterationsPerThread(int v) {
+            this.iterationsPerThread = v;
+            return this;
+        }
+
         public RunSpec build() {
             if (threads <= 0) {
                 throw new IllegalArgumentException("threads must be > 0");
@@ -93,7 +100,14 @@ public record RunSpec(
             if (task == null) {
                 throw new IllegalArgumentException("task must not be null");
             }
-            return new RunSpec(threads, duration, totalTimeout, threadNamePrefix, maxPendingFailures, task, errors);
+
+            if (iterationsPerThread < 0)
+                throw new IllegalArgumentException("iterationsPerThread must be >= 0");
+
+            return new RunSpec(
+                    threads, duration, totalTimeout, threadNamePrefix,
+                    maxPendingFailures, task, errors, iterationsPerThread
+            );
         }
     }
 }
